@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/Users/jennachoo/old/BandFile/app/libs/microsoft-band-1.3.10428.1.jar"
+        jumboMode="false"
+        revision="23.0.0 rc2"
+        sha1="f3da45109884b30fbfd70e3bd2835d99a730acd8">
+        <dex dex="/Users/jennachoo/old/BandFile/app/build/intermediates/pre-dexed/debug/microsoft-band-1.3.10428.1-e0efee7aff8d4cc3700ff53ef4756ce4be10513a.jar" />
+    </item>
+
+</items>
