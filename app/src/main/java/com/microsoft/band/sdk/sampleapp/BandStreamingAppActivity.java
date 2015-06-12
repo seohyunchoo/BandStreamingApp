@@ -107,6 +107,11 @@ public class BandStreamingAppActivity extends Activity {
 				e.printStackTrace();
 			}
 		}
+		try {
+			FileOutputStream fos = new FileOutputStream(file);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 
 	}
 	@Override
@@ -200,8 +205,9 @@ public class BandStreamingAppActivity extends Activity {
         @Override
         protected Void doInBackground(Void... voids) {
             try {
-                //FileOutputStream fos = new FileOutputStream(file);
-				FileOutputStream fos = openFileOutput(FILENAME,MODE_APPEND);
+                FileOutputStream fos = new FileOutputStream(file,true);
+				//String name = sdCard + path + "/" + FILENAME;
+				//FileOutputStream fos = openFileOutput(name,MODE_APPEND);
 				OutputStreamWriter osw = new OutputStreamWriter(fos);
                 try{
 					osw.write(now);
@@ -220,43 +226,5 @@ public class BandStreamingAppActivity extends Activity {
         }
     }
 
-	public boolean isExternalStorageWritable() {
-		String state = Environment.getExternalStorageState();
-		if (Environment.MEDIA_MOUNTED.equals(state)) {
-			return true;
-		}
-		return false;
-	}
-
-	/* Checks if external storage is available to at least read */
-	/*public boolean isExternalStorageReadable() {
-		String state = Environment.getExternalStorageState();
-		if (Environment.MEDIA_MOUNTED.equals(state) ||
-				Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-			return true;
-		}
-		return false;
-	}
-
-	public boolean createDirIfNotExists(String path) {
-		boolean ret = true;
-		file = new File(Environment.getExternalStorageDirectory(), path);
-		if (!file.exists()) {
-			if (!file.mkdirs()) {
-				Log.e("TravellerLog :: ", "Problem creating Image folder");
-				ret = false;
-			}
-		}
-		return ret;
-	}
-	public File getAlbumStorageDir(Context context, String albumName) {
-		// Get the directory for the app's private pictures directory.
-		File file = new File(context.getExternalFilesDir(null), albumName);
-		if (!file.mkdirs()) {
-			Log.e("DEBUG", "Directory not created");
-		}
-		return file;
-	}
-	*/
 }
 
