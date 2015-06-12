@@ -77,6 +77,7 @@ public class BandStreamingAppActivity extends Activity {
 	private float z;
 	private long steps;
 	private float skinTemp;
+	private long calories;
 
 	
     @Override
@@ -132,6 +133,7 @@ public class BandStreamingAppActivity extends Activity {
 					client.getSensorManager().registerAccelerometerEventListener(mAccelerometerEventListener, SampleRate.MS128);
 					client.getSensorManager().registerPedometerEventListener(mPedometerEventListener);
 					client.getSensorManager().registerSkinTemperatureEventListener(mSkinTemperatureEventListener);
+					client.getSensorManager().registerCaloriesEventListener(mCaloriesEventListener);
 					if(client.getSensorManager().getCurrentHeartRateConsent() == UserConsent.GRANTED) {
 						client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
 					} else {
@@ -242,6 +244,21 @@ public class BandStreamingAppActivity extends Activity {
 				steps = event.getTotalSteps();
 				update = Long.toString(time);
 				update += ("  " + steps + "\n");
+				new writeOnFile().execute();
+				appendToUI(update);
+			}
+		}
+	};
+
+
+	private BandCaloriesEventListener mCaloriesEventListener = new BandCaloriesEventListener() {
+		@Override
+		public void onBandCaloriesChanged(BandCaloriesEvent event) {
+			if (event != null) {
+				time = event.getTimestamp();
+				calories = event.getCalories();
+				update = Long.toString(time);
+				update += ("  " + calories + "\n");
 				new writeOnFile().execute();
 				appendToUI(update);
 			}
