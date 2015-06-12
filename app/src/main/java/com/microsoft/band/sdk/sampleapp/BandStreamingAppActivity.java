@@ -33,6 +33,11 @@ import com.microsoft.band.sensors.HeartRateConsentListener;
 import com.microsoft.band.sensors.SampleRate;
 import com.microsoft.band.sensors.BandPedometerEvent;
 import com.microsoft.band.sensors.BandPedometerEventListener;
+import com.microsoft.band.sensors.BandCaloriesEvent;
+import com.microsoft.band.sensors.BandCaloriesEventListener;
+import com.microsoft.band.sensors.BandSkinTemperatureEvent;
+import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
+
 
 import android.os.Bundle;
 import android.util.Log;
@@ -71,6 +76,7 @@ public class BandStreamingAppActivity extends Activity {
 	private float y;
 	private float z;
 	private long steps;
+	private float skinTemp;
 
 	
     @Override
@@ -125,6 +131,7 @@ public class BandStreamingAppActivity extends Activity {
 					appendToUI("Band is connected.\n");
 					client.getSensorManager().registerAccelerometerEventListener(mAccelerometerEventListener, SampleRate.MS128);
 					client.getSensorManager().registerPedometerEventListener(mPedometerEventListener);
+					client.getSensorManager().registerSkinTemperatureEventListener(mSkinTemperatureEventListener);
 					if(client.getSensorManager().getCurrentHeartRateConsent() == UserConsent.GRANTED) {
 						client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
 					} else {
@@ -176,7 +183,7 @@ public class BandStreamingAppActivity extends Activity {
 				z = event.getAccelerationZ();
 				cal = Calendar.getInstance();
 				update = Long.toString(time);
-				update += ("  x: " + x + ", y: " + y + ", z: " + z + "\n");
+				update += ("  " + x + ", " + y + ", " + z + "\n");
 				new writeOnFile().execute();
             	appendToUI(update);
 
@@ -192,7 +199,7 @@ public class BandStreamingAppActivity extends Activity {
 				time = event.getTimestamp();
 				heartRate = event.getHeartRate();
 				update = Long.toString(time);
-				update += ("  heart rate: " + heartRate + "\n");
+				update += ("  " + heartRate + "\n");
 				new writeOnFile().execute();
 				appendToUI(update);
 			}
@@ -212,6 +219,21 @@ public class BandStreamingAppActivity extends Activity {
 	};
 
 
+	private BandSkinTemperatureEventListener mSkinTemperatureEventListener = new BandSkinTemperatureEventListener() {
+		@Override
+		public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent event) {
+			if (event != null) {
+				time = event.getTimestamp();
+				skinTemp = event.getTemperature();
+				update = Long.toString(time);
+				update += ("  " + heartRate + "\n");
+				new writeOnFile().execute();
+				appendToUI(update);
+			}
+		}
+	};
+
+
 	private BandPedometerEventListener mPedometerEventListener = new BandPedometerEventListener() {
 		@Override
 		public void onBandPedometerChanged(BandPedometerEvent event) {
@@ -219,7 +241,7 @@ public class BandStreamingAppActivity extends Activity {
 				time = event.getTimestamp();
 				steps = event.getTotalSteps();
 				update = Long.toString(time);
-				update += ("  steps so far: " + steps + "\n");
+				update += ("  " + steps + "\n");
 				new writeOnFile().execute();
 				appendToUI(update);
 			}
