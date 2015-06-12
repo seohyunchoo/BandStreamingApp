@@ -37,6 +37,8 @@ import com.microsoft.band.sensors.BandCaloriesEvent;
 import com.microsoft.band.sensors.BandCaloriesEventListener;
 import com.microsoft.band.sensors.BandSkinTemperatureEvent;
 import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
+import com.microsoft.band.sensors.BandDistanceEvent;
+import com.microsoft.band.sensors.BandDistanceEventListener;
 
 
 import android.os.Bundle;
@@ -78,6 +80,7 @@ public class BandStreamingAppActivity extends Activity {
 	private long steps;
 	private float skinTemp;
 	private long calories;
+	private float distance;
 
 	
     @Override
@@ -259,6 +262,21 @@ public class BandStreamingAppActivity extends Activity {
 				calories = event.getCalories();
 				update = Long.toString(time);
 				update += ("  " + calories + "\n");
+				new writeOnFile().execute();
+				appendToUI(update);
+			}
+		}
+	};
+
+	private BandDistanceEventListener mDistanceEventListener = new BandDistanceEventListener() {
+		@Override
+		public void onBandDistanceChanged(BandDistanceEvent event) {
+			if (event != null) {
+				time = event.getTimestamp();
+				distance = event.getTotalDistance();
+				//can have motiontype, pace and speed as well
+				update = Long.toString(time);
+				update += ("  " + distance + "\n");
 				new writeOnFile().execute();
 				appendToUI(update);
 			}
