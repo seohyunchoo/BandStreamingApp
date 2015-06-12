@@ -23,12 +23,17 @@ import com.microsoft.band.BandException;
 import com.microsoft.band.BandInfo;
 import com.microsoft.band.BandIOException;
 import com.microsoft.band.ConnectionState;
+import com.microsoft.band.UserConsent;
 import com.microsoft.band.sdk.sampleapp.streaming.R;
 import com.microsoft.band.sensors.BandAccelerometerEvent;
 import com.microsoft.band.sensors.BandAccelerometerEventListener;
+import com.microsoft.band.sensors.BandHeartRateEvent;
+import com.microsoft.band.sensors.BandHeartRateEventListener;
+import com.microsoft.band.sensors.HeartRateConsentListener;
 import com.microsoft.band.sensors.SampleRate;
+import com.microsoft.band.sensors.BandPedometerEvent;
+import com.microsoft.band.sensors.BandPedometerEventListener;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -37,38 +42,35 @@ import android.os.AsyncTask;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
-import java.sql.Timestamp;
-import java.sql.Date;
 import java.util.Calendar;
 import java.io.File;
 import android.os.Environment;
-
-import static android.content.Context.MODE_WORLD_READABLE;
 
 public class BandStreamingAppActivity extends Activity {
 
 	private BandClient client = null;
 	private Button btnStart;
 	private TextView txtStatus;
-	private String FILENAME = "accelerometerData.txt";
-	private float x;
-	private float y;
-	private float z;
-	private java.util.Date time;
+
+	private long time;
 	private Calendar cal = Calendar.getInstance();
-	private String now;
-	private String path = "/band";
+	private String update;
+
 	private File sdCard;
 	private File dir;
 	private File file;
 
+
+	private int heartRate;
+	private float x;
+	private float y;
+	private float z;
+	private long steps;
 
 	
     @Override
@@ -86,20 +88,10 @@ public class BandStreamingAppActivity extends Activity {
 			}
 		});
 
-		/*if (isExternalStorageReadable() && isExternalStorageWritable() && createDirIfNotExists(path)){
-			File yourFile = new File(FILENAME);
-			if(!yourFile.exists()) {
-				try {
-					yourFile.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}*/
 		sdCard = Environment.getExternalStorageDirectory();
 		dir = new File (sdCard.getAbsolutePath() + "/band");
 		dir.mkdirs();
-		file = new File(dir, FILENAME);
+		file = new File(dir, "accelerometer.txt");
 		if(!file.exists()) {
 			try {
 				file.createNewFile();
@@ -132,6 +124,12 @@ public class BandStreamingAppActivity extends Activity {
 				if (getConnectedBandClient()) {
 					appendToUI("Band is connected.\n");
 					client.getSensorManager().registerAccelerometerEventListener(mAccelerometerEventListener, SampleRate.MS128);
+					client.getSensorManager().registerPedometerEventListener(mPedometerEventListener);
+					if(client.getSensorManager().getCurrentHeartRateConsent() == UserConsent.GRANTED) {
+						client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
+					} else {
+						client.getSensorManager().requestHeartRateConsent(BandStreamingAppActivity.this, mHeartRateConsentListener);
+					}
 				} else {
 					appendToUI("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
 				}
@@ -166,25 +164,69 @@ public class BandStreamingAppActivity extends Activity {
 			}
 		});
 	}
-	
+
+
     private BandAccelerometerEventListener mAccelerometerEventListener = new BandAccelerometerEventListener() {
         @Override
         public void onBandAccelerometerChanged(final BandAccelerometerEvent event) {
             if (event != null) {
+				time = event.getTimestamp();
 				x = event.getAccelerationX();
 				y = event.getAccelerationY();
 				z = event.getAccelerationZ();
 				cal = Calendar.getInstance();
-				time = cal.getTime();
-				now = time.toString();
-				now += ("  x: " + x + ", y: " + y + ", z: " + z + "\n");
+				update = Long.toString(time);
+				update += ("  x: " + x + ", y: " + y + ", z: " + z + "\n");
 				new writeOnFile().execute();
-            	appendToUI(now);
+            	appendToUI(update);
 
             }
         }
     };
-    
+
+
+	private BandHeartRateEventListener mHeartRateEventListener = new BandHeartRateEventListener() {
+		@Override
+		public void onBandHeartRateChanged(final BandHeartRateEvent event) {
+			if (event != null) {
+				time = event.getTimestamp();
+				heartRate = event.getHeartRate();
+				update = Long.toString(time);
+				update += ("  heart rate: " + heartRate + "\n");
+				new writeOnFile().execute();
+				appendToUI(update);
+			}
+		}
+	};
+
+
+	private HeartRateConsentListener mHeartRateConsentListener = new HeartRateConsentListener() {
+		@Override
+		public void userAccepted(boolean b) {
+			// handle user's heart rate consent decision
+			if (!b){
+				// Consent hasn't been given
+				appendToUI(String.valueOf(b));
+			}
+		}
+	};
+
+
+	private BandPedometerEventListener mPedometerEventListener = new BandPedometerEventListener() {
+		@Override
+		public void onBandPedometerChanged(BandPedometerEvent event) {
+			if (event != null) {
+				time = event.getTimestamp();
+				steps = event.getTotalSteps();
+				update = Long.toString(time);
+				update += ("  steps so far: " + steps + "\n");
+				new writeOnFile().execute();
+				appendToUI(update);
+			}
+		}
+	};
+
+
 	private boolean getConnectedBandClient() throws InterruptedException, BandException {
 		if (client == null) {
 			BandInfo[] devices = BandClientManager.getInstance().getPairedBands();
@@ -196,35 +238,32 @@ public class BandStreamingAppActivity extends Activity {
 		} else if (ConnectionState.CONNECTED == client.getConnectionState()) {
 			return true;
 		}
-		
 		appendToUI("Band is connecting...\n");
 		return ConnectionState.CONNECTED == client.connect().await();
 	}
 
+
 	private class writeOnFile extends AsyncTask<Void, Void, Void>{
-        @Override
-        protected Void doInBackground(Void... voids) {
-            try {
-                FileOutputStream fos = new FileOutputStream(file,true);
-				//String name = sdCard + path + "/" + FILENAME;
-				//FileOutputStream fos = openFileOutput(name,MODE_APPEND);
+		@Override
+		protected Void doInBackground(Void... voids) {
+			try {
+				FileOutputStream fos = new FileOutputStream(file,true);
 				OutputStreamWriter osw = new OutputStreamWriter(fos);
-                try{
-					osw.write(now);
+				try{
+					osw.write(update);
 					osw.flush();
 					osw.close();
-					//Toast.makeText(getBaseContext(),"Data saved", Toast.LENGTH_LONG).show();
+
 				}catch (Exception e){
 					Log.e("DEBUG","HERE");
 					e.printStackTrace();
 				}
-            } catch (FileNotFoundException e) {
+			} catch (FileNotFoundException e) {
 				Log.e("DEBUG","not found");
-                e.printStackTrace();
-            }
-            return null;
-        }
-    }
-
+				e.printStackTrace();
+			}
+			return null;
+		}
+	}
 }
 
