@@ -243,7 +243,7 @@ public class BandStreamingAppActivity extends Activity {
 				long time = event.getTimestamp();
 				skinTemp = event.getTemperature();
 				String update = Long.toString(time);
-				update += ("  " + heartRate + "\n");
+				update += ("  " + skinTemp + "\n");
 				Params params = new Params("skimTemperature.txt",update);
 				new writeOnFile().execute(params);
 				appendToUI(update);
