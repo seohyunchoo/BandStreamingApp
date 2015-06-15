@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Band Streaming Sample</string>
+    <string name="app_name">Balanced Campus</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     
@@ -9,6 +9,6 @@
         1. Pair your band with the phone\n
         2. Make sure Microsoft Health is installed\n        
         3. Press the Start button\n
-        4. Data from the acceleromter sensor should be displayed.</string>
+        4. Data from the sensors should be displayed.</string>
     <string name="start">Start</string>
 </resources>

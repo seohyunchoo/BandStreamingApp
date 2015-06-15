@@ -7,14 +7,14 @@
     <!-- From: file:/Users/jennachoo/old/BandFile/app/src/main/res/values/strings.xml -->
     <eat-comment/>
     <string name="action_settings">Settings</string>
-    <string name="app_name">Band Streaming Sample</string>
+    <string name="app_name">Balanced Campus</string>
     <string name="hello_world">Hello world!</string>
     <string name="start">Start</string>
     <string name="steps">Steps to use this app: \n
         1. Pair your band with the phone\n
         2. Make sure Microsoft Health is installed\n        
         3. Press the Start button\n
-        4. Data from the acceleromter sensor should be displayed.</string>
+        4. Data from the sensors should be displayed.</string>
     <!-- From: file:/Users/jennachoo/old/BandFile/app/src/main/res/values/styles.xml -->
     <eat-comment/>
     <style name="AppBaseTheme" parent="@android:style/Theme.Holo.Light">

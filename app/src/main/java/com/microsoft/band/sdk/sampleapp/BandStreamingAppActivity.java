@@ -39,6 +39,14 @@ import com.microsoft.band.sensors.BandSkinTemperatureEvent;
 import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
 import com.microsoft.band.sensors.BandDistanceEvent;
 import com.microsoft.band.sensors.BandDistanceEventListener;
+import com.microsoft.band.sensors.BandContactEvent;
+import com.microsoft.band.sensors.BandContactEventListener;
+import com.microsoft.band.sensors.BandContactState;
+import com.microsoft.band.sensors.BandUVEvent;
+import com.microsoft.band.sensors.BandUVEventListener;
+import com.microsoft.band.sensors.BandGyroscopeEvent;
+import com.microsoft.band.sensors.BandGyroscopeEventListener;
+import com.microsoft.band.sensors.UVIndexLevel;
 
 
 import android.os.Bundle;
@@ -54,6 +62,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.StringBufferInputStream;
 import java.util.Calendar;
 import java.io.File;
 import android.os.Environment;
@@ -64,9 +73,6 @@ public class BandStreamingAppActivity extends Activity {
 	private Button btnStart;
 	private TextView txtStatus;
 
-	private long time;
-	private Calendar cal = Calendar.getInstance();
-	private String update;
 
 	private File sdCard;
 	private File dir;
@@ -81,9 +87,23 @@ public class BandStreamingAppActivity extends Activity {
 	private float skinTemp;
 	private long calories;
 	private float distance;
+	private BandContactState contact;
+	private UVIndexLevel UV;
+	private int gyroscope;
 
-	
-    @Override
+	private static class Params {
+		String filename;
+		String update;
+
+		Params(String filename, String update) {
+			this.filename = filename;
+			this.update = update;
+		}
+	}
+
+
+
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -101,24 +121,13 @@ public class BandStreamingAppActivity extends Activity {
 		sdCard = Environment.getExternalStorageDirectory();
 		dir = new File (sdCard.getAbsolutePath() + "/band");
 		dir.mkdirs();
-		file = new File(dir, "accelerometer.txt");
-		if(!file.exists()) {
-			try {
-				file.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		try {
-			FileOutputStream fos = new FileOutputStream(file);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+
 
 	}
 	@Override
 	protected void onDestroy(){
 		super.onDestroy();
+		//TODO: taunregister everything
 		try {
 			client.getSensorManager().unregisterAccelerometerEventListeners();
 		} catch (BandIOException e) {
@@ -137,6 +146,8 @@ public class BandStreamingAppActivity extends Activity {
 					client.getSensorManager().registerPedometerEventListener(mPedometerEventListener);
 					client.getSensorManager().registerSkinTemperatureEventListener(mSkinTemperatureEventListener);
 					client.getSensorManager().registerCaloriesEventListener(mCaloriesEventListener);
+					client.getSensorManager().registerUVEventListener(mUVEventListener);
+					client.getSensorManager().registerDistanceEventListener(mDistanceEventListener);
 					if(client.getSensorManager().getCurrentHeartRateConsent() == UserConsent.GRANTED) {
 						client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
 					} else {
@@ -182,14 +193,14 @@ public class BandStreamingAppActivity extends Activity {
         @Override
         public void onBandAccelerometerChanged(final BandAccelerometerEvent event) {
             if (event != null) {
-				time = event.getTimestamp();
+				long time = event.getTimestamp();
 				x = event.getAccelerationX();
 				y = event.getAccelerationY();
 				z = event.getAccelerationZ();
-				cal = Calendar.getInstance();
-				update = Long.toString(time);
+				String update = Long.toString(time);
 				update += ("  " + x + ", " + y + ", " + z + "\n");
-				new writeOnFile().execute();
+				Params params = new Params("accelerometer.txt",update);
+				new writeOnFile().execute(params);
             	appendToUI(update);
 
             }
@@ -201,11 +212,12 @@ public class BandStreamingAppActivity extends Activity {
 		@Override
 		public void onBandHeartRateChanged(final BandHeartRateEvent event) {
 			if (event != null) {
-				time = event.getTimestamp();
+				long time = event.getTimestamp();
 				heartRate = event.getHeartRate();
-				update = Long.toString(time);
+				String update = Long.toString(time);
 				update += ("  " + heartRate + "\n");
-				new writeOnFile().execute();
+				Params params = new Params("heartRate.txt",update);
+				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
 		}
@@ -228,11 +240,12 @@ public class BandStreamingAppActivity extends Activity {
 		@Override
 		public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent event) {
 			if (event != null) {
-				time = event.getTimestamp();
+				long time = event.getTimestamp();
 				skinTemp = event.getTemperature();
-				update = Long.toString(time);
+				String update = Long.toString(time);
 				update += ("  " + heartRate + "\n");
-				new writeOnFile().execute();
+				Params params = new Params("skimTemperature.txt",update);
+				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
 		}
@@ -243,11 +256,12 @@ public class BandStreamingAppActivity extends Activity {
 		@Override
 		public void onBandPedometerChanged(BandPedometerEvent event) {
 			if (event != null) {
-				time = event.getTimestamp();
+				long time = event.getTimestamp();
 				steps = event.getTotalSteps();
-				update = Long.toString(time);
+				String update = Long.toString(time);
 				update += ("  " + steps + "\n");
-				new writeOnFile().execute();
+				Params params = new Params("pedometer.txt",update);
+				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
 		}
@@ -258,11 +272,12 @@ public class BandStreamingAppActivity extends Activity {
 		@Override
 		public void onBandCaloriesChanged(BandCaloriesEvent event) {
 			if (event != null) {
-				time = event.getTimestamp();
+				long time = event.getTimestamp();
 				calories = event.getCalories();
-				update = Long.toString(time);
+				String update = Long.toString(time);
 				update += ("  " + calories + "\n");
-				new writeOnFile().execute();
+				Params params = new Params("calories.txt",update);
+				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
 		}
@@ -272,13 +287,52 @@ public class BandStreamingAppActivity extends Activity {
 		@Override
 		public void onBandDistanceChanged(BandDistanceEvent event) {
 			if (event != null) {
-				time = event.getTimestamp();
+				long time = event.getTimestamp();
 				distance = event.getTotalDistance();
 				//can have motiontype, pace and speed as well
-				update = Long.toString(time);
+				String update = Long.toString(time);
 				update += ("  " + distance + "\n");
-				new writeOnFile().execute();
+				Params params = new Params("distance.txt",update);
+				new writeOnFile().execute(params);
 				appendToUI(update);
+			}
+		}
+	};
+
+
+	private BandUVEventListener mUVEventListener = new BandUVEventListener() {
+		@Override
+		public void onBandUVChanged(BandUVEvent event) {
+			if (event != null){
+				long time = event.getTimestamp();
+				UV = event.getUVIndexLevel();
+				String update = Long.toString(time);
+				update += ("  " + UV + "\n");
+				Params params = new Params("UV.txt",update);
+				new writeOnFile().execute(params);
+				appendToUI(update);
+			}
+		}
+	};
+
+/*
+is this information needed?
+	private BandGyroscopeEventListener mGyrosocopeEventListener = new BandGyroscopeEventListener() {
+		@Override
+		public void onBandGyroscopeChanged(BandGyroscopeEvent event) {
+			if (event != null){
+				time = event.getTimestamp();
+			}
+		}
+	};
+*/
+
+	private BandContactEventListener mContactEventListener = new BandContactEventListener() {
+		@Override
+		public void onBandContactChanged(BandContactEvent event) {
+			if (event != null) {
+				long time = event.getTimestamp();
+				contact = event.getContactState();
 			}
 		}
 	};
@@ -300,25 +354,35 @@ public class BandStreamingAppActivity extends Activity {
 	}
 
 
-	private class writeOnFile extends AsyncTask<Void, Void, Void>{
+	private class writeOnFile extends AsyncTask<Params, Void, Void>{
 		@Override
-		protected Void doInBackground(Void... voids) {
+		protected Void doInBackground(Params...params) {
+			String filename = params[0].filename;
+			String update = params[0].update;
+			file = new File(dir, filename);
+			if(!file.exists()) {
+                try {
+                    file.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+			FileOutputStream fos = null;
 			try {
-				FileOutputStream fos = new FileOutputStream(file,true);
-				OutputStreamWriter osw = new OutputStreamWriter(fos);
-				try{
-					osw.write(update);
-					osw.flush();
-					osw.close();
+                fos = new FileOutputStream(file,true);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+			OutputStreamWriter osw = new OutputStreamWriter(fos);
+			try {
+                osw.write(update);
+                osw.flush();
+                osw.close();
 
-				}catch (Exception e){
-					Log.e("DEBUG","HERE");
-					e.printStackTrace();
-				}
-			} catch (FileNotFoundException e) {
-				Log.e("DEBUG","not found");
-				e.printStackTrace();
-			}
+            } catch (Exception ex) {
+                Log.e("DEBUG", "HERE");
+                ex.printStackTrace();
+            }
 			return null;
 		}
 	}
