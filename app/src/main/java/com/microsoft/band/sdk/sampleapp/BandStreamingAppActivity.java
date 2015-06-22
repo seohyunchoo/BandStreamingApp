@@ -260,7 +260,7 @@ public class BandStreamingAppActivity extends Activity {
 				String update = Long.toString(time);
 				update += "," + new Timestamp(date.getTime());
 				update += ("," + skinTemp + "\n");
-				Params params = new Params("skimTemperature.csv",update,skinTempL);
+				Params params = new Params("skinTemperature.csv",update,skinTempL);
 				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
