@@ -66,6 +66,8 @@ import java.io.StringBufferInputStream;
 import java.util.Calendar;
 import java.io.File;
 import android.os.Environment;
+import java.util.Date;
+import java.sql.Timestamp;
 
 public class BandStreamingAppActivity extends Activity {
 
@@ -78,6 +80,7 @@ public class BandStreamingAppActivity extends Activity {
 	private File dir;
 	private File file;
 
+	private Date date= new java.util.Date();
 
 	private int heartRate;
 	private float x;
@@ -91,13 +94,23 @@ public class BandStreamingAppActivity extends Activity {
 	private UVIndexLevel UV;
 	private int gyroscope;
 
+	private String heartRateL = "Unix Timestamp,Local Timestamp,Heart Rate\n";
+	private String accelerometerL = "Unix Timestamp,Local Timestamp,x,y,z\n";
+	private String stepsL = "Unix Timestamp,Local Timestamp,steps\n";
+	private String skinTempL  ="Unix Timestamp,Local Timestamp,Skin Temperature\n";
+	private String caloriesL = "Unix Timestamp,Local Timestamp,Calories\n";
+	private String distanceL = "Unix Timestamp,Local Timestamp,Distance\n";
+	private String UVL = "Unix Timestamp,Local Timestamp,UV\n";
+
 	private static class Params {
 		String filename;
 		String update;
+		String firstLine;
 
-		Params(String filename, String update) {
+		Params(String filename, String update, String firstLine) {
 			this.filename = filename;
 			this.update = update;
+			this.firstLine = firstLine;
 		}
 	}
 
@@ -198,8 +211,9 @@ public class BandStreamingAppActivity extends Activity {
 				y = event.getAccelerationY();
 				z = event.getAccelerationZ();
 				String update = Long.toString(time);
-				update += ("  " + x + ", " + y + ", " + z + "\n");
-				Params params = new Params("accelerometer.txt",update);
+				update += "," + new Timestamp(date.getTime());
+				update += ("," + x + "," + y + "," + z + "\n");
+				Params params = new Params("accelerometer.csv",update,accelerometerL);
 				new writeOnFile().execute(params);
             	appendToUI(update);
 
@@ -215,8 +229,9 @@ public class BandStreamingAppActivity extends Activity {
 				long time = event.getTimestamp();
 				heartRate = event.getHeartRate();
 				String update = Long.toString(time);
-				update += ("  " + heartRate + "\n");
-				Params params = new Params("heartRate.txt",update);
+				update += "," + new Timestamp(date.getTime());
+				update += ("," + heartRate + "\n");
+				Params params = new Params("heartRate.csv",update,heartRateL);
 				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
@@ -243,8 +258,9 @@ public class BandStreamingAppActivity extends Activity {
 				long time = event.getTimestamp();
 				skinTemp = event.getTemperature();
 				String update = Long.toString(time);
-				update += ("  " + skinTemp + "\n");
-				Params params = new Params("skimTemperature.txt",update);
+				update += "," + new Timestamp(date.getTime());
+				update += ("," + skinTemp + "\n");
+				Params params = new Params("skimTemperature.csv",update,skinTempL);
 				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
@@ -259,8 +275,9 @@ public class BandStreamingAppActivity extends Activity {
 				long time = event.getTimestamp();
 				steps = event.getTotalSteps();
 				String update = Long.toString(time);
-				update += ("  " + steps + "\n");
-				Params params = new Params("pedometer.txt",update);
+				update += "," + new Timestamp(date.getTime());
+				update += ("," + steps + "\n");
+				Params params = new Params("pedometer.csv",update,stepsL);
 				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
@@ -275,8 +292,9 @@ public class BandStreamingAppActivity extends Activity {
 				long time = event.getTimestamp();
 				calories = event.getCalories();
 				String update = Long.toString(time);
-				update += ("  " + calories + "\n");
-				Params params = new Params("calories.txt",update);
+				update += "," + new Timestamp(date.getTime());
+				update += ("," + calories + "\n");
+				Params params = new Params("calories.csv",update,caloriesL);
 				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
@@ -291,8 +309,9 @@ public class BandStreamingAppActivity extends Activity {
 				distance = event.getTotalDistance();
 				//can have motiontype, pace and speed as well
 				String update = Long.toString(time);
-				update += ("  " + distance + "\n");
-				Params params = new Params("distance.txt",update);
+				update += "," + new Timestamp(date.getTime());
+				update += ("," + distance + "\n");
+				Params params = new Params("distance.csv",update,distanceL);
 				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
@@ -307,8 +326,9 @@ public class BandStreamingAppActivity extends Activity {
 				long time = event.getTimestamp();
 				UV = event.getUVIndexLevel();
 				String update = Long.toString(time);
-				update += ("  " + UV + "\n");
-				Params params = new Params("UV.txt",update);
+				update += "," + new Timestamp(date.getTime());
+				update += ("," + UV + "\n");
+				Params params = new Params("UV.csv",update,UVL);
 				new writeOnFile().execute(params);
 				appendToUI(update);
 			}
@@ -359,10 +379,27 @@ is this information needed?
 		protected Void doInBackground(Params...params) {
 			String filename = params[0].filename;
 			String update = params[0].update;
+			String firstLine = params[0].firstLine;
 			file = new File(dir, filename);
 			if(!file.exists()) {
                 try {
                     file.createNewFile();
+					FileOutputStream nfos = null;
+					try {
+						nfos = new FileOutputStream(file,true);
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					}
+					OutputStreamWriter nosw = new OutputStreamWriter(nfos);
+					try {
+						nosw.write(firstLine);
+						nosw.flush();
+						nosw.close();
+
+					} catch (Exception ex) {
+						Log.e("DEBUG", "HERE");
+						ex.printStackTrace();
+					}
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
