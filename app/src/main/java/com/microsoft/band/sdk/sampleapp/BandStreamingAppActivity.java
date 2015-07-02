@@ -48,7 +48,6 @@ import com.microsoft.band.sensors.BandGyroscopeEvent;
 import com.microsoft.band.sensors.BandGyroscopeEventListener;
 import com.microsoft.band.sensors.UVIndexLevel;
 
-
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -69,7 +68,11 @@ import android.os.Environment;
 import java.util.Date;
 import java.sql.Timestamp;
 
-public class BandStreamingAppActivity extends Activity {
+import com.aware.Aware;
+import com.aware.Aware_Preferences;
+import com.aware.utils.Aware_Plugin;
+
+public class BandStreamingAppActivity extends Aware_Plugin {
 
 	private BandClient client = null;
 	private Button btnStart;
@@ -80,7 +83,6 @@ public class BandStreamingAppActivity extends Activity {
 	private File dir;
 	private File file;
 
-	private Date date= new java.util.Date();
 
 	private int heartRate;
 	private float x;
@@ -115,22 +117,10 @@ public class BandStreamingAppActivity extends Activity {
 	}
 
 
-
 	@Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        txtStatus = (TextView) findViewById(R.id.txtStatus);
-        btnStart = (Button) findViewById(R.id.btnStart);
-        btnStart.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				txtStatus.setText("");
-				new appTask().execute();
-			}
-		});
-
+    public void onCreate() {
+        super.onCreate();
+        new appTask().execute(); //runs receivers on background thread
 		sdCard = Environment.getExternalStorageDirectory();
 		dir = new File (sdCard.getAbsolutePath() + "/band");
 		dir.mkdirs();
@@ -138,9 +128,9 @@ public class BandStreamingAppActivity extends Activity {
 
 	}
 	@Override
-	protected void onDestroy(){
+	public void onDestroy(){
 		super.onDestroy();
-		//TODO: taunregister everything
+		//TODO:  unregister everything
 		try {
 			client.getSensorManager().unregisterAccelerometerEventListeners();
 		} catch (BandIOException e) {
@@ -155,7 +145,8 @@ public class BandStreamingAppActivity extends Activity {
 			try {
 				if (getConnectedBandClient()) {
 					appendToUI("Band is connected.\n");
-					client.getSensorManager().registerAccelerometerEventListener(mAccelerometerEventListener, SampleRate.MS128);
+                    //register receivers
+					client.getSensorManager().registerAccelerometerEventListener(mAccelerometerEventListener, SampleRate.MS16);
 					client.getSensorManager().registerPedometerEventListener(mPedometerEventListener);
 					client.getSensorManager().registerSkinTemperatureEventListener(mSkinTemperatureEventListener);
 					client.getSensorManager().registerCaloriesEventListener(mCaloriesEventListener);
@@ -164,7 +155,8 @@ public class BandStreamingAppActivity extends Activity {
 					if(client.getSensorManager().getCurrentHeartRateConsent() == UserConsent.GRANTED) {
 						client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
 					} else {
-						client.getSensorManager().requestHeartRateConsent(BandStreamingAppActivity.this, mHeartRateConsentListener);
+						//TODO: fill in ???
+                        client.getSensorManager().requestHeartRateConsent(???, mHeartRateConsentListener);
 					}
 				} else {
 					appendToUI("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
@@ -193,12 +185,12 @@ public class BandStreamingAppActivity extends Activity {
 
 	
 	private void appendToUI(final String string) {
-		this.runOnUiThread(new Runnable() {
+		/*this.runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				txtStatus.setText(string);
 			}
-		});
+		});*/
 	}
 
 
@@ -207,6 +199,8 @@ public class BandStreamingAppActivity extends Activity {
         public void onBandAccelerometerChanged(final BandAccelerometerEvent event) {
             if (event != null) {
 				long time = event.getTimestamp();
+				Date date= new java.util.Date();
+
 				x = event.getAccelerationX();
 				y = event.getAccelerationY();
 				z = event.getAccelerationZ();
@@ -227,6 +221,7 @@ public class BandStreamingAppActivity extends Activity {
 		public void onBandHeartRateChanged(final BandHeartRateEvent event) {
 			if (event != null) {
 				long time = event.getTimestamp();
+				Date date= new java.util.Date();
 				heartRate = event.getHeartRate();
 				String update = Long.toString(time);
 				update += "," + new Timestamp(date.getTime());
@@ -256,6 +251,7 @@ public class BandStreamingAppActivity extends Activity {
 		public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent event) {
 			if (event != null) {
 				long time = event.getTimestamp();
+				Date date= new java.util.Date();
 				skinTemp = event.getTemperature();
 				String update = Long.toString(time);
 				update += "," + new Timestamp(date.getTime());
@@ -273,6 +269,7 @@ public class BandStreamingAppActivity extends Activity {
 		public void onBandPedometerChanged(BandPedometerEvent event) {
 			if (event != null) {
 				long time = event.getTimestamp();
+				Date date= new java.util.Date();
 				steps = event.getTotalSteps();
 				String update = Long.toString(time);
 				update += "," + new Timestamp(date.getTime());
@@ -290,6 +287,7 @@ public class BandStreamingAppActivity extends Activity {
 		public void onBandCaloriesChanged(BandCaloriesEvent event) {
 			if (event != null) {
 				long time = event.getTimestamp();
+				Date date= new java.util.Date();
 				calories = event.getCalories();
 				String update = Long.toString(time);
 				update += "," + new Timestamp(date.getTime());
@@ -306,6 +304,7 @@ public class BandStreamingAppActivity extends Activity {
 		public void onBandDistanceChanged(BandDistanceEvent event) {
 			if (event != null) {
 				long time = event.getTimestamp();
+				Date date= new java.util.Date();
 				distance = event.getTotalDistance();
 				//can have motiontype, pace and speed as well
 				String update = Long.toString(time);
@@ -324,6 +323,7 @@ public class BandStreamingAppActivity extends Activity {
 		public void onBandUVChanged(BandUVEvent event) {
 			if (event != null){
 				long time = event.getTimestamp();
+				Date date= new java.util.Date();
 				UV = event.getUVIndexLevel();
 				String update = Long.toString(time);
 				update += "," + new Timestamp(date.getTime());
