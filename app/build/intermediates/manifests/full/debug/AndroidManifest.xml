@@ -282,7 +282,7 @@
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:enabled="@bool/display_aware"
             android:exported="true"
-            android:icon="@drawable/ic_launcher"
+            android:icon="@drawable/ic_launcher_aware"
             android:label="@string/aware_sensors"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Aware" >
@@ -312,7 +312,7 @@
 
             <meta-data
                 android:name="com.android.systemui.action_assist_icon"
-                android:resource="@drawable/ic_launcher" />
+                android:resource="@drawable/ic_launcher_aware" />
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.aware.Aware_Preferences" />

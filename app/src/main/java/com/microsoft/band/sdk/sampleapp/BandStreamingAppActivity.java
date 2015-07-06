@@ -24,7 +24,7 @@ import com.microsoft.band.BandInfo;
 import com.microsoft.band.BandIOException;
 import com.microsoft.band.ConnectionState;
 import com.microsoft.band.UserConsent;
-import com.microsoft.band.sdk.sampleapp.streaming.R;
+//import com.microsoft.band.sdk.sampleapp.streaming.R;
 import com.microsoft.band.sensors.BandAccelerometerEvent;
 import com.microsoft.band.sensors.BandAccelerometerEventListener;
 import com.microsoft.band.sensors.BandHeartRateEvent;
@@ -156,7 +156,7 @@ public class BandStreamingAppActivity extends Aware_Plugin {
 						client.getSensorManager().registerHeartRateEventListener(mHeartRateEventListener);
 					} else {
 						//TODO: fill in ???
-                        client.getSensorManager().requestHeartRateConsent(???, mHeartRateConsentListener);
+                        //client.getSensorManager().requestHeartRateConsent(, mHeartRateConsentListener);
 					}
 				} else {
 					appendToUI("Band isn't connected. Please make sure bluetooth is on and the band is in range.\n");
